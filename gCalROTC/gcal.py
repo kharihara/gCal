@@ -54,20 +54,38 @@ def convertDatetoExcel(day, month, year):
     return (n - offset)
 
 
-def convertExceltoDate(serialDate):
+def convertExceltoDate(serialDate,dateFormat):
+    #if dateFormat=2 replace - to / in date
     dt = datetime.fromordinal(datetime(1900,1,1).toordinal() + int(serialDate) - 2)
     d= dt.date()
-    d=str(d).replace('-','/')
+    if dateFormat == 2:
+            d=str(d).replace('-','/')
     return d 
 
-def addcolon(time):
-    newTime= str(time)
-    newTime= newTime[:2] + ':' + newTime[2:]
-    return newTime
-for x in events:
-    print (x.name)
+def timeFormatChange(time, timeFormat):
+    #if timeFormat=1 keep GMT time
+    #if timeFormat=2 change to AM PM time
+    if timeFormat==2:
+            if int(time)>=1300:
+                    newTime = int(time)-1200
+                    if len(str(newTime))==3:
+                            strTime= str(newTime)
+                            strTime= strTime[:1] + ':' + strTime[1:] + ' PM'
+                            return strTime
+                    else:
+                           strTime= str(newTime)
+                           strTime= strTime[:2] + ':' + strTime[2:] + ' PM' 
+                           return strTime
+            else:
+                    newTime= str(time)
+                    newTime= newTime[:2] + ':' + newTime[2:] + ' AM'
+                    return newTime
+    else:
+            newTime= str(time)
+            newTime= newTime[:2] + ':' + newTime[2:]
+            return newTime
 
-def createNewSheet(eventList):
+def createNewSheet(eventList, dateFormat, timeFormat):
     newWb= Workbook()
     dest_filename = 'formated_sheet.xlsx'
     ws1 = newWb.active
@@ -77,16 +95,17 @@ def createNewSheet(eventList):
     for x in range(2,len(eventList)):
         descript= "Personnel: " + str(eventList[x].personnel) + "; UOD: " + str(eventList[x].uniform) + "; Execution Location: " + str(eventList[x].execloc)
         ws1.cell(None,x,1).value = eventList[x].name
-        ws1.cell(None,x,2).value = convertExceltoDate(eventList[x].date)
+        ws1.cell(None,x,2).value = convertExceltoDate(eventList[x].date, dateFormat)
         ws1.cell(None,x,7).value = descript
         ws1.cell(None,x,8).value = eventList[x].mustloc
         if not eventList[x].time:
-            ws1.cell(None,x,6).value = True
+                ws1.cell(None,x,6).value = True
         else:
-            ws1.cell(None,x,3).value = addcolon(eventList[x].time)
+                print(timeFormatChange(eventList[x].time, timeFormat))
+                ws1.cell(None,x,3).value = timeFormatChange(eventList[x].time, timeFormat)
 
 
 
     newWb.save(filename = dest_filename)
 
-createNewSheet(events)
+createNewSheet(events, 2, 2)
